@@ -20,11 +20,12 @@ class NoteTaker:
             json.dump(list,file,indent=2)
 
     def assign_id(self) -> int:
-        notes = self.open_file()
-        if len(notes) == 0:
+        expenses = self.open_file()
+        if len(expenses) == 0:
             return 1
         else:
-            return notes[-1]['id'] + 1
+            max_id = max(expense['id'] for expense in expenses)
+            return max_id + 1
         
     def edit_notes(self):
         notes = self.open_file()
@@ -58,7 +59,7 @@ class NoteTaker:
 
     def take_notes(self,id:int,title:str,content:str,tags:list,date=f'{datetime.now().strftime('%Y-%m-%d')}'):
         notes = {
-            'id': id,
+            'id': self.assign_id(),
             'title': title,
             'content': content,
             'tags': tags,
