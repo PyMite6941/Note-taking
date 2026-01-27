@@ -1,5 +1,7 @@
 from datetime import datetime
 import json
+import questionary
+from rich import Console
 
 class NoteTaker:
     def __init__(self, filename='data.txt'):
@@ -29,35 +31,45 @@ class NoteTaker:
         
     def edit_notes(self):
         notes = self.open_file()
+        if not notes:
+            return "[bold red]No notes found[/bold red]."
         id = int(input("Enter the id of the note you want to edit:\n> "))
-        choice = int(input("What do you want to edit?\n1. Title\n2. Content\n3. Tags\n> "))
+        choice = questionary.select(
+            "What should be edited?\nUse arrow keys to navigate",
+            choices=[
+                'Title',
+                'Content',
+                'Tags',
+            ],
+            pointer='>'
+        ).ask()
         for item in notes:
             if item['id'] == id:
-                if choice == 1:
+                if choice == 'Title':
                     new_title = str(input("Enter the new title:\n> "))
                     item['title'] = new_title
                     item['edit_date'] = f'{datetime.now().strftime("%Y-%m-%d")}'
-                elif choice == 2:
+                elif choice == 'Content':
                     new_content = str(input("Enter the new content:\n> "))
                     item['content'] = new_content
                     item['edit_date'] = f'{datetime.now().strftime("%Y-%m-%d")}'
-                elif choice == 3:
+                elif choice == 'Tags':
                     new_tags = input("Enter the new tags (e.g. python learning lecture):\n> ").split()
                     item['tags'] = new_tags
                     item['edit_date'] = f'{datetime.now().strftime("%Y-%m-%d")}'
         self.write_file(notes)
-        return "Note edited successfully."
+        return "[bold green]Note edited successfully[/bold green]."
     
     def delete_notes(self):
         notes = self.open_file()
-        id = int(input("Enter the id of the note you want to delete:\n> "))
+        note_id = int(input("Enter the id of the note you want to delete:\n> "))
         for item in notes:
-            if item['id'] == id:
+            if item['id'] == note_id:
                 notes.pop(item)
         self.write_file(notes)
         return "Note deleted successfully."
 
-    def take_notes(self,id:int,title:str,content:str,tags:list,date=f'{datetime.now().strftime('%Y-%m-%d')}'):
+    def take_notes(self,title:str,content:str,tags:list,date=f'{datetime.now().strftime('%Y-%m-%d')}'):
         notes = {
             'id': self.assign_id(),
             'title': title,
@@ -76,29 +88,40 @@ class NoteTaker:
 
     def search_notes(self) -> list:
         notes = self.open_file()
-        choice = int(input("--- Filter Menu ---\n\n1. Id\n2. Title\n3. Tags\n4. Creation Date"))
-        if choice == 1:
+        if not notes:
+            return "[bold red]No notes found[/bold red]."
+        choice = questionary.select(
+            "What should be filtered?\nUse arrow keys to navigate",
+            choices=[
+                'Id',
+                'Title',
+                'Tags',
+                'Creation date',
+            ],
+            pointer='>'
+        ).ask()
+        if choice == 'Id':
             id = int(input("Enter the id of the note you want to find:\n> "))
             count = 1
             for item in notes:
                 if item['id'] == id:
                     print(f"Note {count}:\nId: {item['id']}\nTitle: {item['title']}\nContent: {item['content']}\nTags: {' '.join(item['tags'])}\nCreated: {item['created']}\n")
                     count += 1
-        elif choice == 2:
+        elif choice == 'Title':
             title = str(input("Enter the title of the note you want to find:\n> "))
             count = 1
             for item in notes:
                 if item['title'] == title:
                     print(f"Note {count}:\nId: {item['id']}\nTitle: {item['title']}\nContent: {item['content']}\nTags: {' '.join(item['tags'])}\nCreated: {item['created']}\n")
                     count += 1
-        elif choice == 3:
+        elif choice == 'Tags':
             tag = str(input("Enter the tag of the note you want to find:\n> "))
             count = 1
             for item in notes:
                 if tag in item['tags']:
                     print(f"Note {count}:\nId: {item['id']}\nTitle: {item['title']}\nContent: {item['content']}\nTags: {' '.join(item['tags'])}\nCreated: {item['created']}\n")
                     count += 1
-        elif choice == 4:
+        elif choice == 'Creation date':
             date = str(input("Enter the creation date (yyyy-mm-dd) of the note you want to find:\n> "))
             count = 1
             for item in notes:
@@ -109,23 +132,34 @@ class NoteTaker:
 notes = NoteTaker()
 running = True
 while running:
-    choice = int(input("--- Menu ---\n\n1. Add a note\n\n2. Edit Notes\n3. Delete Notes\n4. Filter all notes\n5. View all notes\n0. Exit\n> "))
-    if choice == 1:
+    choice = questionary.select(
+        "What should be filtered?\nUse arrow keys to navigate",
+        choices=[
+            'Add a note',
+            'Edit notes',
+            'Delete notes',
+            'Filter all notes',
+            'View all notes'
+            'Exit',
+        ],
+        pointer='>'
+    ).ask()
+    if choice == 'Add a note':
         id = notes.assign_id()
         title = str(input("What is the title of the note?\n> "))
         content = str(input("What is the content of the note?\n> "))
         tags = input("What tags should be linked to this note (e.g. python learning lecture) ?\n> ").split()
         date = f'{datetime.now().strftime("%Y-%m-%d")}'
         notes.take_notes(id,title,content,tags,date)
-    elif choice == 2:
+    elif choice == 'Edit notes':
         print(notes.edit_notes())
-    elif choice == 3:
+    elif choice == 'Delete notes':
         print(notes.delete_notes())
-    elif choice == 4:
+    elif choice == 'Filter all notes':
         notes.search_notes()
-    elif choice == 5:
+    elif choice == 'View all notes':
         notes.view_notes()
-    elif choice == 0:
+    elif choice == 'Exit':
         print("Exiting ...")
         running = False
     else:
